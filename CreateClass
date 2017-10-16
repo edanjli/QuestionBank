@@ -1,0 +1,169 @@
+
+
+import random
+import shutil from docx
+import *
+import re
+
+
+class CreateExam:
+    ChoiceNum = [10,10,10]
+    EssayNum = [2,2,2]
+
+    ChoiceTotal = [26, 22, 20]
+    EssayTotal = [5, 5, 5]
+
+    ChosenChoiceNo = []
+    ChosenEssayNo = []
+
+    MaxLineForQuestion = 15  # similar to Macro
+
+
+    def generate_num(self):
+        for i in range(len(self.ChoiceTotal)):
+            QuestionNum
+= random.sample(list(range(1, self.ChoiceTotal[i])), self.ChoiceNum[i])
+           
+QuestionNum.sort()
+            self.ChosenChoiceNo.append(QuestionNum)
+        for i in range(len(self.EssayTotal)):
+            QuestionNum
+= random.sample(list(range(1, self.EssayTotal[i])), self.EssayNum[i])
+           
+QuestionNum.sort()
+            self.ChosenEssayNo.append(QuestionNum)
+        print("chose result is", self.ChosenChoiceNo)
+        print("chose result is", self.ChosenEssayNo)
+
+
+    def update_chosen_num(self, ChosenNo):
+        ChosenNo[0].pop(0)
+        if ChosenNo[0] == []:
+           
+ChosenNo.pop(0)
+
+    def delete_choice_question(self, paragraphs):
+        paragraphs[0].clear()
+        for i in paragraphs[1:]:
+            if i.style.name == "Normal"
+or re.search("[A-J]\)", i.text) != None or re.search("({[A-E]+,*})+", i.text)!=None :
+               
+i.clear()
+               
+del
+i
+            else:
+               
+break
+
+    def delete_choice_answer(self, paragraphs):
+        for i in paragraphs[1: self.MaxLineForQuestion]:
+            if re.search("\([A-J]+", i.text) != None or re.search("({[A-E]+,*})+", i.text)!= None:
+               
+i.clear()
+            elif re.search("__", i.text) != None or (i.style.name != "List
+Paragraph" and i.style.name != "Normal"):
+               
+break
+
+    def delete_essay_question(self, paragraphs):
+        paragraphs[0].clear()
+        j = 1
+        for i in paragraphs[1:]:
+            if (i.style.name == "Normal"
+or i.style.name == "List Paragraph") and re.search("\?",i.text) == None:
+               
+i.clear()
+               
+j = j +1
+            else:
+                
+break
+        return j
+
+    def delete_essay_answer(self, paragraphs):
+        for i in paragraphs[1: self.MaxLineForQuestion]:
+            if (i.style.name == "Normal"
+or i.style.name == "List Paragraph") and re.search("\?", i.text) == None:
+               
+i.clear()
+            else:
+               
+break
+
+    def generate_test(self):
+        Lib = Document("lib.docx")
+        shutil.copyfile("lib.docx", "newAnswer.docx")
+        NewAnswer = Document("newAnswer.docx")
+
+        shutil.copyfile("lib.docx", "newTest.docx")
+        NewTest = Document("newTest.docx")
+
+        CurrentChoiceNo = 0
+        CurrentEssayNo = 0
+
+        for line in range(len(Lib.paragraphs)):
+            i =
+Lib.paragraphs[line]
+            if i.style.name == "Heading
+1" or i.style.name == "Heading 2":
+               
+CurrentEssayNo = 0  ## 进入下一个部分
+               
+CurrentChoiceNo
+= 0
+            elif i.style.name == "List
+Paragraph" and re.search("__", i.text) != None:    ## Choose choice
+question
+               
+CurrentChoiceNo
+= CurrentChoiceNo + 1
+               
+if
+len(self.ChosenChoiceNo) and CurrentChoiceNo
+== self.ChosenChoiceNo[0][0]:
+                   
+self.update_chosen_num(self.ChosenChoiceNo)
+                   
+self.delete_choice_answer(NewTest.paragraphs[line:])
+              
+ else :
+                   
+self.delete_choice_question(NewAnswer.paragraphs[line:])
+                   
+self.delete_choice_question(NewTest.paragraphs[line:])
+            elif i.style.name == "List
+Paragraph" and re.search("\?", i.text) != None:  ## Choose essay
+question
+               
+CurrentEssayNo
+= CurrentEssayNo + 1
+               
+if
+len(self.ChosenEssayNo) and CurrentEssayNo ==
+self.ChosenEssayNo[0][0]:
+                   
+self.update_chosen_num(self.ChosenEssayNo)
+                   
+self.delete_essay_answer(NewTest.paragraphs[line:])
+               
+else:
+                   
+self.delete_essay_question(NewAnswer.paragraphs[line:])
+                   
+self.delete_essay_question(NewTest.paragraphs[line:])
+                   
+#
+NewAnswer.paragraphs = NewAnswer.paragraphs[0: line] +
+NewAnswer.paragraphs[line + j :]
+
+        NewAnswer.save('newAnswer.docx')
+        NewTest.save('newTest.docx')
+
+
+q = CreateExam()
+q.generate_num()
+#
+q.ChosenChoiceNo[0] = [1,2,4,6,9,12,18,20,24,25] ## for test
+
+q.generate_test()
